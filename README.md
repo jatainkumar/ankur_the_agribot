@@ -1,87 +1,146 @@
-# Ankur_the_agribot
-To bridge the critical information gap for Indian farmers by delivering a single, trustworthy, and accessible AI agent that provides actionable intelligence from fragmented knowledge sources and live data streams, ultimately empowering data-driven decision-making at the grassroots level.
+### AgriBot Project - Google Colab Setup and Usage Guide
 
+#### Overview
+This notebook implements **AgriBot**, an AI-powered agricultural assistant designed for Indian farmers. It leverages a Retrieval-Augmented Generation (RAG) architecture, combining a knowledge base of agricultural PDFs with real-time data from external APIs. The bot provides actionable advice on irrigation, pest control, market prices, and weather, with support for both English and Hindi queries.
 
+***
 
-Overview
+### Step 1: Initial Setup
 
+#### 1.1 Mount Google Drive
+To store and access your PDF documents and the search index, you need to mount your Google Drive.
 
-
-
-
-
-A brief, one-to-two sentence description of the project's objective and what the notebook accomplishes.
-
-Prerequisites
-
-Software: A Google Account for Google Colab, Python 3.x.
-Dependencies: All required packages are listed in the requirements.txt file.
-
-Installation (Google Colab Environment)
-
-This project is designed to be run in Google Colab, which provides a free, cloud-based Jupyter Notebook environment.1 Follow these steps to get set up:
-1. Open the Notebook in Colab:
-You have two primary options to open this notebook:
-Option A: Open Directly from GitHub. If the notebook is in a public GitHub repository, you can open it directly by changing the URL. Replace github.com with colab.research.google.com/github in the notebook's URL and press Enter. The notebook will load directly in the Colab interface.3
-Option B: Upload the Notebook. Go to colab.research.google.com, select the "Upload" tab in the pop-up window, and choose the .ipynb file from your local machine.2
-2. Install Dependencies:
-Once the notebook is open, the first step is to install the required libraries. Run the following command in a code cell to install all dependencies listed in the requirements.txt file. Note that you will need to do this every time you start a new Colab session.4
-!pip install -r requirements.txt
-```
-3. Access Project Data and Files:
-Colab runtimes are ephemeral, meaning any files you upload directly will be deleted when the session ends.5 To work with persistent data, you should use one of the following methods:
-Option A (Recommended): Mount Google Drive. This connects your Google Drive to the Colab environment, allowing you to read and write files directly. Run the following code in a cell and follow the authentication prompts.6
-Python
+```python
 from google.colab import drive
 drive.mount('/content/drive')
+```
 
-Your files will then be accessible at the path /content/drive/MyDrive/.
-Option B: Clone the Repository. If the project data is included in the GitHub repository, you can clone the entire repository into your Colab session. This will download all files, including scripts and data folders.8
-!git clone```
+#### 1.2 Install Required Packages
+The project depends on several Python libraries. Run the following commands in a Colab cell to install them.
 
-What to Change Before Running (Colab Specifics)
+```python
+!pip install --no-cache-dir \
+ pymupdf pdfplumber tabula-py faiss-cpu rank-bm25 unidecode rapidfuzz \
+ pydantic==2.7.1 transformers==4.30.0 \
+ sentence-transformers==2.2.0 \
+ huggingface-hub==0.23.0
 
-This section outlines the user-specific configurations required to run the notebook successfully.
-API Keys and Secrets:
-This notebook may require API keys or other secrets to connect to external services. Do not paste secrets directly into the code. The recommended and most secure method is to use Colab's built-in Secrets manager.10
-Action:
-Click the key icon (🔑) in the left sidebar to open the Secrets panel.
-Click "Add a new secret".
-Enter the secret's name (e.g., OPENAI_API_KEY) and paste its value.
-Enable the toggle switch to grant this notebook access to the secret.12
-In your code, access the secret securely using the userdata module:
-Python
-from google.colab import userdata
-api_key = userdata.get('OPENAI_API_KEY')
+!pip install huggingface-hub==0.25.2
+!pip install -U sentence-transformers
+!pip install gradio
+!pip install gtts
+!pip install speechrecognition
+!pip install groq
+```
 
+***
 
-File Paths:
-The notebook reads from input files and writes to output directories. These paths must be updated to point to the correct location in your mounted Google Drive.
-Action: Update path variables to reflect your Google Drive structure. For example:
-INPUT_DATA_PATH = '/content/drive/MyDrive/Colab_Notebooks/data/input_data.csv' 6
-OUTPUT_DATA_PATH = '/content/drive/MyDrive/Colab_Notebooks/output/'
-Model Parameters:
-If the notebook trains a model, key parameters are defined at the beginning of the analysis section.
-Action: Review and adjust parameters like learning_rate, n_estimators, or random_state as needed for your specific use case.
+### Step 2: Configuration
 
-Usage
+#### 2.1 Set Up Folder Paths
+Before running the main logic, you must define the paths for your PDF knowledge base and the search index files. Create these folders in your Google Drive and update the paths in the notebook.
 
-1. Launch Jupyter Lab or Jupyter Notebook:
-This step is handled by Google Colab. Simply ensure you have opened the notebook as described in the installation section.
-2. Run the Notebook:
-Open the .ipynb file in Colab.
-Execute the cells sequentially from top to bottom.
+```python
+import os
 
-Index Files and Order of Execution
+# Define the directory where your agricultural PDF files are stored
+PDF_DIR = "/content/drive/MyDrive/AgriBot_Project_3/content/pdfs"
 
-Purpose of an Index File: For complex projects with multiple notebooks, an "index" or "master" notebook (often named Index.ipynb, 00_Start_Here.ipynb, or similar) serves as a central hub or table of contents.13 It provides a high-level overview of the project and outlines the correct sequence for running the other notebooks.
-How to Use: If an index file exists, always start there. It will guide you through the project's workflow, ensuring that data processing, modeling, and analysis are performed in the correct order, which is critical for reproducibility.14
-Creating an Index File: If this project contains multiple notebooks and lacks an index file, consider creating one. A simple index notebook with Markdown cells that link to the other notebooks in the required order can greatly improve the project's clarity and usability for future users.
+# Define the directory where the search index will be saved and loaded from
+INDEX_DIR = "/content/drive/MyDrive/AgriBot_Project_3/content/index"
 
-Repository Structure
+# Create the directories if they don't already exist
+os.makedirs(PDF_DIR, exist_ok=True)
+os.makedirs(INDEX_DIR, exist_ok=True)
+```
 
-/data: Contains raw and processed data files.
-/notebooks: Contains the main Jupyter Notebook for the analysis.
-README.md: This file.
-requirements.txt
+#### 2.2 Configure API Keys
+The bot uses several external services to fetch real-time data. You need to obtain API keys for these services and set them as environment variables in your Colab session.
 
+```python
+import os
+
+# Replace the placeholder text with your actual API keys
+os.environ["GROQ_API_KEY"] = "your_groq_api_key_here"
+os.environ["OPENWEATHER_API_KEY"] = "your_openweather_api_key_here"
+os.environ["TAVILY_API_KEY"] = "your_tavily_api_key_here"
+os.environ["AGROMONITORING_API_KEY"] = "your_agromonitoring_api_key_here"
+os.environ["DATA_GOV_IN_API_KEY"] = "your_data_gov_in_api_key_here"
+```
+
+**How to get the API Keys**:
+- **Groq**: Sign up on the [Groq platform](https://console.groq.com/keys) to get your API key.
+- **OpenWeather**: Create a free account at [openweathermap.org](https://openweathermap.org) to get an API key.
+- **Tavily**: Register at [tavily.com](https://tavily.com) for API access.
+- **AgroMonitoring**: Sign up for an API key at [agromonitoring.com](https://agromonitoring.com).
+- **Data.gov.in**: Register on the [data.gov.in](https://data.gov.in) portal to get an API key.
+
+***
+
+### Step 3: Data Ingestion and Index Building
+This step processes your PDFs and builds a searchable index.
+
+#### 3.1 Upload PDFs
+Place all your agricultural PDF documents into the folder specified by `PDF_DIR`. The notebook will automatically scan this directory.
+
+#### 3.2 Run the Ingestion Script
+To create the knowledge base, you need to uncomment and run the ingestion cell in the notebook. This process extracts text and tables from each PDF, chunks the content, and builds a hybrid search index using FAISS (for dense retrieval) and BM25 (for sparse retrieval).
+
+```python
+# This code snippet is present in the notebook but commented out.
+# You must uncomment it to build your index for the first time.
+
+hybrid = HybridIndex(embedding_model_name=EMBEDDING_MODEL_NAME)
+pdf_files = sorted(glob.glob(os.path.join(PDF_DIR, "*.pdf")))
+
+total_chunks = 0
+for pdf_path in pdf_files:
+    meta = default_doc_meta(pdf_path)
+    try:
+        t_chunks = extract_text_chunks(pdf_path, meta)
+        tb_chunks = extract_tables(pdf_path, meta)
+        hybrid.add_chunks(t_chunks + tb_chunks)
+        total_chunks += len(t_chunks) + len(tb_chunks)
+        print(f"Ingested {os.path.basename(pdf_path)}: text={len(t_chunks)}, table_chunks={len(tb_chunks)}")
+    except Exception as e:
+        print("Failed:", pdf_path, e)
+
+print("Total chunks:", total_chunks)
+hybrid.build()
+hybrid.save(INDEX_DIR)
+print("Index built and saved to", INDEX_DIR)
+```
+
+***
+
+### Step 4: Launch the AgriBot User Interface
+After building the index, you can launch the interactive Gradio interface to chat with the bot.
+
+#### 4.1 Load the Index
+First, ensure the index is loaded into memory.
+
+```python
+hybrid2 = HybridIndex(embedding_model_name=EMBEDDING_MODEL_NAME)
+hybrid2.load(INDEX_DIR)
+```
+
+#### 4.2 Run the Gradio App
+Execute the final cell in the notebook to start the Gradio web interface.
+
+```python
+demo.launch(debug=True, share=True)
+```
+This will provide a public URL that you can open in your browser to interact with AgriBot. The interface supports both text and voice input.
+
+### Features of the UI:
+- **Text Chat**: Type your agricultural questions directly.
+- **Voice Input**: Record your questions using the microphone.
+- **Audio Response**: Listen to the bot's answers.
+
+***
+
+### Notes and Troubleshooting
+- **File Paths**: Ensure that the paths to your PDF and index directories are correct. Incorrect paths are a common source of errors.
+- **API Quotas**: Be mindful of the usage limits for the free tiers of the APIs. If you encounter errors, check your API dashboards for quota information.
+- **Dependencies**: If you face issues with package installations, try restarting the Colab runtime (`Runtime > Restart session`) and running the installation cells again.
+- **Language Support**: The bot is designed to handle both English and Hindi queries, making it accessible to a wider range of farmers in India.
