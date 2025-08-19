@@ -91,7 +91,7 @@ AgriBot will launch locally. Open the provided URL in your browser.
 ---
 
 ## 🛠️ Tech Stack
-- **Python** 🐍
+- **Python** 
 - **Gradio** – UI for chat
 - **Hugging Face / GROQ** – LLM inference
 - **OpenWeather** – Weather data
@@ -103,12 +103,12 @@ AgriBot will launch locally. Open the provided URL in your browser.
 
 ## 📂 Project Structure
 ```
-agribot/
+ankur_the_agribot/
 │── app.py                # Main entry point
 │── Content/index         # Chunks Storage
-│── requirements.txt       # Dependencies
-│── .env.example           # Example env file
-│── README.md              # Project docs
+│── requirements.txt      # Dependencies
+│── .env.example          # Example env file
+│── README.md             # Project docs
 ```
 
 ---
