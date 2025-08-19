@@ -105,7 +105,7 @@ AgriBot will launch locally. Open the provided URL in your browser.
 ```
 agribot/
 │── app.py                # Main entry point
-│── agribot/              # Core logic
+│── Content/index         # Chunks Storage
 │── requirements.txt       # Dependencies
 │── .env.example           # Example env file
 │── README.md              # Project docs
