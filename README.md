@@ -8,9 +8,13 @@ sdk_version: 5.0.1
 app_file: app.py
 pinned: false
 ---
+## 🌾 Ankur - The Agribot
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-green?style=for-the-badge&logo=huggingface)](https://huggingface.co/spaces/jatainkumar/ankur_the_agribot)
 
-# 🌱 Ankur The AgriBot – AI-powered Agricultural Assistant
+An AI-powered agricultural assistant built to help farmers with intelligent insights and guidance.
+
+# 🌱 Ankur The AgriBot – AI-powered Agricultural Assistant 
 
 AgriBot is an intelligent chatbot designed to assist farmers by providing hyper-local agricultural insights, weather forecasts, market prices, and crop advisory.  
 It integrates multiple APIs with an LLM backend to deliver **actionable, real-time guidance**.
